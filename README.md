@@ -7,17 +7,17 @@ RESTful service for aggregating data about users subscriptions. CRUDL-operations
 ## Tech Stack
 
 - **Language**: Go (Golang) 1.24+
-- **Framework**: Gin Web Framework (github.com/gin-gonic/gin)
-- **Database**: PostgreSQL (gorm.io/driver/postgres)
-- **Database ORM**: GORM (gorm.io/gorm)
-- **API Documentation**: Swagger UI (github.com/swaggo/gin-swagger)
+- **Framework**: Gin Web Framework [`github.com/gin-gonic/gin`]
+- **Database**: PostgreSQL [`gorm.io/driver/postgres`]
+- **Database ORM**: GORM [`gorm.io/gorm`]
+- **API Documentation**: Swagger UI [`github.com/swaggo/gin-swagger`]
 - **Configuration**: godotenv for .env file support
-- **Logging**: logrus (github.com/sirupsen/logrus)
+- **Logging**: logrus [`github.com/sirupsen/logrus`]
 - **Containerization**: Docker & Docker Compose
 
 ## API
 
-View API documentation at `http://localhost:8080/swagger/index.html`
+When You launch the app you can view API documentation at `http://localhost:8080/swagger/index.html`
 
 ### Endpoints
 
