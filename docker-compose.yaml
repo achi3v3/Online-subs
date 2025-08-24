@@ -1,0 +1,41 @@
+version: "3.9"
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    platform: linux/amd64
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-net 
+  app:
+    container_name: app
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=postgres
+      - DB_PORT=5432
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
+    networks:
+      - app-net 
+      
+volumes:
+  pgdata:
+
+networks:
+  app-net:
+    driver: bridge
