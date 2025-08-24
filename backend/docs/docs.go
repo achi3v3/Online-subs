@@ -41,7 +41,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Создает новую запись о подписке пользователя",
+                "description": "Создает новую запись о подписке пользователя (формат времени: RFC3339 [2025-07-31T19:00:00Z])",
                 "consumes": [
                     "application/json"
                 ],
@@ -51,7 +51,7 @@ const docTemplate = `{
                 "tags": [
                     "subscriptions"
                 ],
-                "summary": "Создать новую подписку",
+                "summary": "Создаёт запись подписки",
                 "parameters": [
                     {
                         "description": "Данные подписки",
@@ -104,14 +104,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Дата начала периода (в формате RFC3339)",
+                        "description": "Дата начала периода (в формате RFC3339) [2025-06-30T19:00:00Z]",
                         "name": "start_date",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Дата окончания периода (в формате RFC3339)",
+                        "description": "Дата окончания периода (в формате RFC3339) [2025-07-31T19:00:00Z]",
                         "name": "end_date",
                         "in": "query",
                         "required": true
@@ -336,7 +336,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "1.3",
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},

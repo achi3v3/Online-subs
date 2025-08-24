@@ -14,7 +14,7 @@ import (
 )
 
 // @title Swagger Users Subscribtions
-// @version 1.0
+// @version 1.3
 // @description REST-сервис для агрегации данных об онлайн-подписках пользователей
 // @contact.url	https://github.com/achi3v3
 // @contact.email aamir-tutaev@mail.ru
@@ -22,18 +22,19 @@ import (
 // @BasePath /
 func main() {
 	// Настройка логирования
-	logrus.SetFormatter(&logrus.TextFormatter{
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 	})
-	logrus.SetLevel(logrus.InfoLevel)
+	logger.SetLevel(logrus.InfoLevel)
 	// Инициализация базы данных
 	database.Init()
-	logrus.Infof("Database initialized successfully")
+	logger.Infof("Database initialized successfully")
 
 	// Создание экземпляров репозитория, сервиса и обработчиков
-	repo := subs.NewRepository()
-	service := subs.NewService(repo)
-	handlers := subs.NewHandlers(service)
+	repo := subs.NewRepository(logger)
+	service := subs.NewService(repo, logger)
+	handlers := subs.NewHandlers(service, logger)
 
 	// Создание роутера
 	router := gin.Default()
@@ -56,12 +57,12 @@ func main() {
 
 	// Эндпоинт документации Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	logrus.Infof("Documentation API: http://localhost:8080/swagger/index.html#/")
+	logger.Infof("Documentation API: http://localhost:8080/swagger/index.html#/")
 
 	// Запуск сервера
-	logrus.Infof("Server starting on :8080")
+	logger.Infof("Server starting on :8080")
 
 	if err := router.Run(":8080"); err != nil {
-		logrus.Fatalf("Failed to start server: %v", err)
+		logger.Fatalf("Failed to start server: %v", err)
 	}
 }

@@ -27,16 +27,16 @@ type handlers struct {
 }
 
 // NewHandlers — конструктор handlers
-func NewHandlers(service Service) Handlers {
+func NewHandlers(service Service, logger *logrus.Logger) Handlers {
 	return &handlers{
 		service: service,
-		logger:  logrus.StandardLogger(),
+		logger:  logger,
 	}
 }
 
 // CreateSub godoc
 // @Summary Создаёт запись подписки
-// @Description Создает новую запись о подписке пользователя
+// @Description Создает новую запись о подписке пользователя (формат времени: RFC3339 [2025-07-31T19:00:00Z])
 // @Tags subscriptions
 // @Accept json
 // @Produce json
@@ -187,8 +187,8 @@ func (h *handlers) ListSubs(c *gin.Context) {
 // @Description Подсчитывает суммарную стоимость всех подписок за выбранный период с фильтрацией по ID пользователя и названию подписки
 // @Tags subscriptions
 // @Produce json
-// @Param start_date query string true "Дата начала периода (в формате RFC3339)"
-// @Param end_date query string true "Дата окончания периода (в формате RFC3339)"
+// @Param start_date query string true "Дата начала периода (в формате RFC3339) [2025-06-30T19:00:00Z]"
+// @Param end_date query string true "Дата окончания периода (в формате RFC3339) [2025-07-31T19:00:00Z]"
 // @Param user_id query string false "ID пользователя"
 // @Param service_name query string false "Название сервиса"
 // @Success 200 {object} map[string]uint

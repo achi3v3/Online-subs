@@ -26,9 +26,10 @@ type service struct {
 }
 
 // NewService — конструктор servoce
-func NewService(repo Repository) Service {
+func NewService(repo Repository, logger *logrus.Logger) Service {
 	return &service{
-		repo: repo,
+		repo:   repo,
+		logger: logger,
 	}
 }
 

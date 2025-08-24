@@ -22,7 +22,7 @@ info:
     url: https://github.com/achi3v3
   description: REST-сервис для агрегации данных об онлайн-подписках пользователей
   title: Swagger Users Subscribtions
-  version: "1.0"
+  version: "1.3"
 paths:
   /subs:
     get:
@@ -42,7 +42,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Создает новую запись о подписке пользователя
+      description: 'Создает новую запись о подписке пользователя (формат времени:
+        RFC3339 [2025-07-31T19:00:00Z])'
       parameters:
       - description: Данные подписки
         in: body
@@ -69,7 +70,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Создать новую подписку
+      summary: Создаёт запись подписки
       tags:
       - subscriptions
   /subs/{id}:
@@ -174,12 +175,12 @@ paths:
       description: Подсчитывает суммарную стоимость всех подписок за выбранный период
         с фильтрацией по ID пользователя и названию подписки
       parameters:
-      - description: Дата начала периода (в формате RFC3339)
+      - description: Дата начала периода (в формате RFC3339) [2025-06-30T19:00:00Z]
         in: query
         name: start_date
         required: true
         type: string
-      - description: Дата окончания периода (в формате RFC3339)
+      - description: Дата окончания периода (в формате RFC3339) [2025-07-31T19:00:00Z]
         in: query
         name: end_date
         required: true

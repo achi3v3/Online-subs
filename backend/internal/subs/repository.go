@@ -26,10 +26,10 @@ type repository struct {
 }
 
 // NewRepository — конструктор repository
-func NewRepository() Repository {
+func NewRepository(logger *logrus.Logger) Repository {
 	return &repository{
 		db:     database.Get(),
-		logger: logrus.StandardLogger(),
+		logger: logger,
 	}
 }
 
