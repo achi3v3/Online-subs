@@ -2,12 +2,15 @@ package subs
 
 import (
 	"app/internal/models"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 // Handlers — контракт для HTTP-обработчиков
@@ -56,7 +59,12 @@ func (h *handlers) CreateSub(c *gin.Context) {
 
 	if err := h.service.CreateSub(&sub); err != nil {
 		h.logger.Errorf("handlers.CreateSub: Failed to create subscription: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		// Проверяем, является ли ошибка ошибкой БД
+		if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(err.Error(), "database") {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
@@ -86,7 +94,12 @@ func (h *handlers) GetSubByID(c *gin.Context) {
 	sub, err := h.service.GetSubByID(uint(id))
 	if err != nil {
 		h.logger.Warnf("handlers.GetSubByID: Subscription not found with ID %d", id)
-		c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		// Проверяем, является ли ошибка ошибкой БД
+		if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(err.Error(), "database") {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		} else {
+			c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		}
 		return
 	}
 
@@ -121,11 +134,17 @@ func (h *handlers) UpdateSub(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Убеждаемся, что ID из URL используется, а не из тела запроса
 	sub.ID = uint(id)
 
 	if err := h.service.UpdateSub(&sub); err != nil {
 		h.logger.Errorf("handlers.UpdateSub: Failed to update subscription with ID %d: %v", id, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		// Проверяем, является ли ошибка ошибкой БД
+		if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(err.Error(), "database") {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
@@ -154,7 +173,12 @@ func (h *handlers) DeleteSub(c *gin.Context) {
 
 	if err := h.service.DeleteSub(uint(id)); err != nil {
 		h.logger.Warnf("handlers.DeleteSub: Subscription not found with ID %d", id)
-		c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		// Проверяем, является ли ошибка ошибкой БД
+		if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(err.Error(), "database") {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		} else {
+			c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		}
 		return
 	}
 
@@ -164,17 +188,73 @@ func (h *handlers) DeleteSub(c *gin.Context) {
 
 // ListSubs godoc
 // @Summary Список подписок
-// @Description Возвращает список всех записей о подписках
+// @Description Возвращает список всех записей о подписках с пагинацией
 // @Tags subscriptions
 // @Produce json
+// @Param page query int false "Номер страницы (по умолчанию 1)"
+// @Param limit query int false "Количество элементов на странице (по умолчанию 10, максимум 100)"
 // @Success 200 {array} models.UserSubs
 // @Router /subs [get]
 func (h *handlers) ListSubs(c *gin.Context) {
 	h.logger.Info("handlers.ListSubs: Fetching list of all subscriptions")
+
+	// Получаем параметры пагинации
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
+
+	page := 1
+	limit := 10
+
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+
+	// Если указаны параметры пагинации, используем пагинацию
+	if pageStr != "" || limitStr != "" {
+		offset := (page - 1) * limit
+
+		subs, total, err := h.service.ListSubsWithPagination(limit, offset)
+		if err != nil {
+			h.logger.Errorf("handlers.ListSubs: Failed to fetch list of subscriptions: %v", err)
+			// Проверяем, является ли ошибка ошибкой БД
+			if strings.Contains(err.Error(), "database") {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
+			return
+		}
+
+		h.logger.Infof("handlers.ListSubs: Fetched %d subscriptions (page %d, limit %d)", len(subs), page, limit)
+		c.JSON(http.StatusOK, gin.H{
+			"subscriptions": subs,
+			"pagination": gin.H{
+				"page":  page,
+				"limit": limit,
+				"total": total,
+			},
+		})
+		return
+	}
+
+	// Если параметры пагинации не указаны, возвращаем все подписки (обратная совместимость)
 	subs, err := h.service.ListSubs()
 	if err != nil {
 		h.logger.Errorf("handlers.ListSubs: Failed to fetch list of subscriptions: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		// Проверяем, является ли ошибка ошибкой БД
+		if strings.Contains(err.Error(), "database") {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
@@ -233,7 +313,12 @@ func (h *handlers) GetTotalPriceForPeriod(c *gin.Context) {
 	total, err := h.service.GetTotalPriceForPeriod(startDate, endDate, userID, serviceName)
 	if err != nil {
 		h.logger.Errorf("handlers.GetTotalPriceForPeriod: Failed to calculate total price: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		// Проверяем, является ли ошибка ошибкой БД
+		if strings.Contains(err.Error(), "database") {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
 		return
 	}
 

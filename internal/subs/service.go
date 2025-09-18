@@ -16,6 +16,7 @@ type Service interface {
 	UpdateSub(sub *models.UserSubs) error
 	DeleteSub(id uint) error
 	ListSubs() ([]models.UserSubs, error)
+	ListSubsWithPagination(limit, offset int) ([]models.UserSubs, int64, error)
 	GetTotalPriceForPeriod(startDate, endDate time.Time, userID, serviceName string) (uint, error)
 }
 
@@ -37,6 +38,10 @@ func NewService(repo Repository, logger *logrus.Logger) Service {
 func (s *service) CreateSub(sub *models.UserSubs) error {
 	s.logger.Infof("service.CreateSub: Creating subscription")
 	// Валидация обязательных полей
+	if sub.ID != 0 {
+		s.logger.Warnf("service.CreateSub: ID should not be provided when creating a subscription")
+		return errors.New("ID should not be provided when creating a subscription")
+	}
 	if sub.ServiceName == "" {
 		s.logger.Warnf("service.CreateSub: service_name is required")
 		return errors.New("service_name is required")
@@ -117,6 +122,12 @@ func (s *service) DeleteSub(id uint) error {
 func (s *service) ListSubs() ([]models.UserSubs, error) {
 	s.logger.Infof("service.ListSubs: Fetching list of all subscriptions")
 	return s.repo.List()
+}
+
+// ListSubsWithPagination возвращает список подписок с пагинацией
+func (s *service) ListSubsWithPagination(limit, offset int) ([]models.UserSubs, int64, error) {
+	s.logger.Infof("service.ListSubsWithPagination: Fetching list of subscriptions with limit %d and offset %d", limit, offset)
+	return s.repo.ListWithPagination(limit, offset)
 }
 
 // GetTotalPriceForPeriod подсчитывает суммарную стоимостт подписок за период

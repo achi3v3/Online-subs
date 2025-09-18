@@ -4,6 +4,7 @@ import (
 	"app/internal/database"
 	"app/internal/subs"
 	"net/http"
+	"os"
 
 	_ "app/docs"
 
@@ -26,7 +27,18 @@ func main() {
 	logger.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 	})
-	logger.SetLevel(logrus.InfoLevel)
+
+	// Установка уровня логирования из переменной окружения
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info" // значение по умолчанию
+	}
+	level, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		logger.Warnf("Invalid log level '%s', using 'info' as default", logLevel)
+		level = logrus.InfoLevel
+	}
+	logger.SetLevel(level)
 	// Инициализация базы данных
 	database.Init()
 	logger.Infof("Database initialized successfully")
@@ -60,9 +72,13 @@ func main() {
 	logger.Infof("Documentation API: http://localhost:8080/swagger/index.html#/")
 
 	// Запуск сервера
-	logger.Infof("Server starting on :8080")
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "8080" // значение по умолчанию
+	}
+	logger.Infof("Server starting on port %s", port)
 
-	if err := router.Run(":8080"); err != nil {
+	if err := router.Run(":" + port); err != nil {
 		logger.Fatalf("Failed to start server: %v", err)
 	}
 }
